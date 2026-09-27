@@ -38,6 +38,9 @@
 #include "utility.h"
 #include "uuid.h"
 #include "video.h"
+#ifdef SUNSHINE_BUILD_PYROWAVE
+  #include "pyrowave.h"
+#endif
 
 using namespace std::literals;
 
@@ -1201,6 +1204,9 @@ namespace nvhttp {
     if ((video::active_av1_mode == 4 || video::active_av1_mode == 5) && video::last_encoder_probe_supported_yuv444_for_codec[2]) {
       codec_mode_flags |= SCM_AV1_HIGH10_444;
     }
+#ifdef SUNSHINE_BUILD_PYROWAVE
+    if (config::video.pyrowave_enabled && video::probe_pyrowave()) codec_mode_flags |= SCM_MASK_PYROWAVE;
+#endif
     return codec_mode_flags;
   }
 

@@ -27,6 +27,9 @@ extern "C" {
 // local includes
 #include "cbs.h"
 #include "config.h"
+#ifdef SUNSHINE_BUILD_PYROWAVE
+  #include "pyrowave.h"
+#endif
 #include "display_device.h"
 #include "globals.h"
 #include "input.h"
@@ -168,6 +171,7 @@ namespace video {
    * @return Effective stream configuration, downgraded to SDR when HDR is unsupported.
    */
   config_t resolve_dynamic_range(const encoder_t &encoder, config_t config) {
+    if (config.videoFormat == 3) return config;
     if (!config.dynamicRange) {
       return config;
     }
@@ -1938,6 +1942,16 @@ namespace video {
    * @return 0 when the frame is encoded and queued; nonzero on encoder failure.
    */
   int encode(int64_t frame_nr, encode_session_t &session, safe::mail_raw_t::queue_t<packet_t> &packets, void *channel_data, std::optional<std::chrono::steady_clock::time_point> frame_timestamp) {
+#ifdef SUNSHINE_BUILD_PYROWAVE
+    if (auto pyro = dynamic_cast<pyrowave_session_t *>(&session)) {
+      auto data = pyro->frame();
+      auto packet = std::make_unique<packet_raw_generic>(std::move(data), frame_nr, true);
+      packet->channel_data = channel_data;
+      packet->frame_timestamp = frame_timestamp;
+      packets->raise(std::move(packet));
+      return 0;
+    }
+#endif
     if (auto avcodec_session = dynamic_cast<avcodec_encode_session_t *>(&session)) {
       return encode_avcodec(frame_nr, *avcodec_session, packets, channel_data, frame_timestamp);
     } else if (auto nvenc_session = dynamic_cast<nvenc_encode_session_t *>(&session)) {
@@ -2373,6 +2387,15 @@ namespace video {
    * @return Constructed encode session object.
    */
   std::unique_ptr<encode_session_t> make_encode_session(platf::display_t *disp, const encoder_t &encoder, const config_t &config, int width, int height, std::unique_ptr<platf::encode_device_t> encode_device) {
+#ifdef SUNSHINE_BUILD_PYROWAVE
+    if (config.videoFormat == 3) {
+      auto session = std::make_unique<pyrowave_session_t>();
+      auto pyro_config = config;
+      if (config::video.pyrowave_bitrate > 0) pyro_config.bitrate = std::min(pyro_config.bitrate, config::video.pyrowave_bitrate);
+      if (config::video.max_bitrate > 0) pyro_config.bitrate = std::min(pyro_config.bitrate, config::video.max_bitrate);
+      return session->init(pyro_config, disp->is_hdr()) == 0 ? std::move(session) : nullptr;
+    }
+#endif
     if (dynamic_cast<platf::avcodec_encode_device_t *>(encode_device.get())) {
       auto avcodec_encode_device = boost::dynamic_pointer_cast<platf::avcodec_encode_device_t>(std::move(encode_device));
       return make_avcodec_encode_session(disp, encoder, config, width, height, std::move(avcodec_encode_device));
@@ -2578,6 +2601,13 @@ namespace video {
 
     auto colorspace = colorspace_from_client_config(config, disp.is_hdr());
 
+#ifdef SUNSHINE_BUILD_PYROWAVE
+    if (config.videoFormat == 3) {
+      auto result = std::make_unique<platf::avcodec_encode_device_t>();
+      result->colorspace = colorspace_from_client_config(config, disp.is_hdr());
+      return result;
+    }
+#endif
     platf::pix_fmt_e pix_fmt;
     if (config.chromaSamplingType == 1) {
       // YUV 4:4:4

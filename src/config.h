@@ -217,6 +217,8 @@ namespace config {
       workarounds_t wa;  ///< Display-device compatibility workarounds.
     } dd;  ///< Display-device integration settings.
 
+    bool pyrowave_enabled {};  ///< Opt-in native Vulkan PyroWave codec.
+    int pyrowave_bitrate {};  ///< Optional PyroWave ceiling in kbps (0 uses client bitrate).
     int max_bitrate;  ///< Maximum bitrate ceiling in kbps for bitrate requested from the client.
     double minimum_fps_target;  ///< Lowest framerate that will be used when streaming. Range 0-1000, 0 = half of client's requested framerate.
   };

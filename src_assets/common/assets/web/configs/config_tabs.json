@@ -59,6 +59,8 @@
         "refresh_rate_only": []
       },
       "max_bitrate": 0,
+      "pyrowave_enabled": "disabled",
+      "pyrowave_bitrate": 0,
       "minimum_fps_target": 0
     }
   },

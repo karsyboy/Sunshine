@@ -10,6 +10,7 @@ import Checkbox from "../../Checkbox.vue";
 
 const props = defineProps({
   platform: String,
+  pyrowaveAvailable: Boolean,
   config: Object,
 })
 
@@ -18,6 +19,13 @@ const config = ref(props.config)
 
 <template>
   <div id="audio-video" class="config-page">
+    <section v-if="pyrowaveAvailable" class="mb-4">
+      <h3>PyroWave</h3>
+      <Checkbox class="mb-3" id="pyrowave_enabled" locale-prefix="config" v-model="config.pyrowave_enabled" default="disabled" />
+      <label for="pyrowave_bitrate" class="form-label">{{ $t('config.pyrowave_bitrate') }}</label>
+      <input type="number" id="pyrowave_bitrate" class="form-control" min="0" max="2000000" step="1000" v-model="config.pyrowave_bitrate" />
+      <div class="form-text">{{ $t('config.pyrowave_bitrate_desc') }}</div>
+    </section>
     <!-- Audio Sink -->
     <div class="mb-3">
       <label for="audio_sink" class="form-label">{{ $t('config.audio_sink') }}</label>

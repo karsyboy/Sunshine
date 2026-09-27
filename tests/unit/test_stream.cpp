@@ -20,6 +20,7 @@
 #include <src/network.h>
 
 namespace stream {
+  uint64_t video_pacing_bps(int video_format, int bitrate_kbps, int fec_percentage);
   std::vector<uint8_t> concat_and_insert(uint64_t insert_size, uint64_t slice_size, const std::string_view &data1, const std::string_view &data2);
   std::optional<std::pair<std::uint16_t, std::string_view>> parse_control_packet(const ENetPacket &packet);
 }  // namespace stream
@@ -84,4 +85,17 @@ TEST(ControlPacketTests, AcceptsTypeAndPayload) {
   ASSERT_TRUE(message);
   EXPECT_EQ(message->first, 0x0206);
   EXPECT_EQ(message->second, "abc");
+}
+
+/**
+ * @brief Existing codecs retain pacing while native streams can exceed 1 Gbps.
+ */
+TEST(VideoPacingTests, LegacyAndNativeLanRates) {
+  for (int format : {0, 1, 2}) {
+    EXPECT_EQ(stream::video_pacing_bps(format, 2000000, 20), 800000000u);
+  }
+  EXPECT_EQ(stream::video_pacing_bps(3, 200000, 20), 800000000u);
+  EXPECT_GE(stream::video_pacing_bps(3, 2000000, 20), 2400000000ull);
+  EXPECT_GT(stream::video_pacing_bps(3, 2000000, 100), 4000000000ull);
+  EXPECT_EQ(stream::video_pacing_bps(3, -1, -1), 800000000u);
 }

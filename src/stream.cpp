@@ -1516,6 +1516,22 @@ namespace stream {
   }
 
   /**
+   * @brief Select video sender pacing without constraining native LAN bitrates.
+   * @param video_format Negotiated codec family.
+   * @param bitrate_kbps Negotiated video bitrate.
+   * @param fec_percentage Applied recovery overhead.
+   * @return Bits per second including native stream burst headroom.
+   */
+  uint64_t video_pacing_bps(int video_format, int bitrate_kbps, int fec_percentage) {
+    constexpr uint64_t legacy_bps = 800000000;
+    if (video_format != 3) {
+      return legacy_bps;
+    }
+    auto requested_bps = uint64_t(std::max(0, bitrate_kbps)) * 1000;
+    return std::max(legacy_bps, requested_bps * (100 + std::clamp(fec_percentage, 0, 100)) / 100 * 5 / 4);
+  }
+
+  /**
    * @brief Run the broadcast video sender thread.
    *
    * @param sock Socket used to read or write the protocol message.
@@ -1656,8 +1672,8 @@ namespace stream {
       }
 
       try {
-        // Use around 80% of 1Gbps          1Gbps            percent    ms     packet      byte
-        size_t ratecontrol_packets_in_1ms = std::giga::num * 80 / 100 / 1000 / blocksize / 8;
+        auto pacing_bps = video_pacing_bps(session->config.monitor.videoFormat, session->config.monitor.bitrate, fecPercentage);
+        size_t ratecontrol_packets_in_1ms = std::max<uint64_t>(1, pacing_bps / 1000 / blocksize / 8);
 
         // Send less than 64K in a single batch.
         // On Windows, batches above 64K seem to bypass SO_SNDBUF regardless of its size,

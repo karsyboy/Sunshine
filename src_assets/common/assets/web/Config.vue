@@ -99,6 +99,7 @@
 
       <!-- Audio/Video Tab -->
       <audio-video
+        :pyrowave-available="pyrowaveAvailable"
         v-if="currentTab === 'av'"
         :config="config"
         :platform="platform"
@@ -218,6 +219,7 @@
     data() {
       return {
         platform: "",
+        pyrowaveAvailable: false,
         saved: false,
         restarted: false,
         config: null,
@@ -270,6 +272,12 @@
         .then((r) => {
           this.config = r;
           this.platform = this.config.platform;
+          this.pyrowaveAvailable = this.config.pyrowave_available === true;
+          delete this.config.pyrowave_available;
+          if (this.pyrowaveAvailable) {
+            this.config.pyrowave_enabled ??= "disabled";
+            this.config.pyrowave_bitrate ??= 0;
+          }
 
           if (this.platform === "windows") {
             this.tabs = this.tabs.filter((el) => {
@@ -342,6 +350,10 @@
 
         // create a temp copy of this.config to use for the post request
         let config = this.serialize();
+        if (!this.pyrowaveAvailable) {
+          delete config.pyrowave_enabled;
+          delete config.pyrowave_bitrate;
+        }
 
         // delete default values from this.config
         this.tabs.forEach(tab => {
