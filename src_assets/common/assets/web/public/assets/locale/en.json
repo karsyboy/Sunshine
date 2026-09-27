@@ -179,6 +179,7 @@
     "category_intel_quicksync_encoder": "Intel QuickSync Encoder",
     "category_network": "Network",
     "category_nvidia_nvenc_encoder": "NVIDIA NVENC Encoder",
+    "category_pyrowave_encoder": "PyroWave Encoder",
     "category_software_encoder": "Software Encoder",
     "category_vaapi_encoder": "VA-API Encoder",
     "category_videotoolbox_encoder": "VideoToolbox Encoder",

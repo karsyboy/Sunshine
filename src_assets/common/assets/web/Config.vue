@@ -99,7 +99,6 @@
 
       <!-- Audio/Video Tab -->
       <audio-video
-        :pyrowave-available="pyrowaveAvailable"
         v-if="currentTab === 'av'"
         :config="config"
         :platform="platform"
@@ -165,7 +164,7 @@
     Volume2,
   } from '@lucide/vue'
 
-  const ENCODER_TAB_IDS = new Set(["nv", "amd", "qsv", "vaapi", "vt", "vulkan", "sw"]);
+  const ENCODER_TAB_IDS = new Set(["nv", "amd", "qsv", "vaapi", "vt", "vulkan", "pyrowave", "sw"]);
 
   /**
    * Compare configuration values without coercing their types.
@@ -277,6 +276,8 @@
           if (this.pyrowaveAvailable) {
             this.config.pyrowave_enabled ??= "disabled";
             this.config.pyrowave_bitrate ??= 0;
+          } else {
+            this.tabs = this.tabs.filter(el => el.id !== "pyrowave");
           }
 
           if (this.platform === "windows") {
@@ -334,6 +335,7 @@
           'vaapi': 'Gpu',
           'vt': 'Gpu',
           'vulkan': 'Gpu',
+          'pyrowave': 'Gpu',
           'sw': 'Cpu',
         };
         return iconMap[tabId] || 'Settings';

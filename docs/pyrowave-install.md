@@ -37,7 +37,7 @@ journalctl --user -u sunshine-pyrowave.service -n 80 --no-pager
 
 If the old service has a different name, stop/disable that service instead. If you start Sunshine through KDE Autostart or manually, stop that instance and disable its autostart entry before starting the new service. Run one Sunshine server at a time. Your normal configuration and pairing state are reused at `~/.config/sunshine`; Flatpak configurations must be copied from their application-specific directory first.
 
-Open [the local Sunshine Web UI](https://localhost:47990), keep your existing credentials, and enable **PyroWave** under Audio/Video. Leave the PyroWave bitrate ceiling at `0` to accept the client's bitrate. A development bitrate of 200 Mbps is a starting point; choose a lower value if your connection cannot sustain it. Restart Sunshine after saving settings.
+Open [the local Sunshine Web UI](https://localhost:47990), keep your existing credentials, and select **PyroWave Encoder** under Encoders. Enable PyroWave and leave its bitrate ceiling at `0` to accept the client's bitrate. A development bitrate of 200 Mbps is a starting point; choose a lower value if your connection cannot sustain it. Restart Sunshine after saving settings.
 
 ## Capture and HDR
 

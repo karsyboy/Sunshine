@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import DisplayDeviceOptions from '../../src_assets/common/assets/web/configs/tabs/audiovideo/DisplayDeviceOptions.vue'
 import General from '../../src_assets/common/assets/web/configs/tabs/General.vue'
 import Network from '../../src_assets/common/assets/web/configs/tabs/Network.vue'
+import PyrowaveEncoder from '../../src_assets/common/assets/web/configs/tabs/encoders/PyrowaveEncoder.vue'
 
 const globalOptions = {
   mocks: {
@@ -111,5 +112,23 @@ describe('network configuration', () => {
     expect(tableText).toContain('47989')
     expect(tableText).toContain('48010')
     expect(tableText).not.toContain('NaN')
+  })
+})
+
+describe('PyroWave encoder configuration', () => {
+  it('presents encoder controls with an accessible bitrate label', () => {
+    const wrapper = mount(PyrowaveEncoder, {
+      props: {
+        config: {
+          pyrowave_enabled: 'disabled',
+          pyrowave_bitrate: 0,
+        },
+      },
+      global: globalOptions,
+    })
+
+    expect(wrapper.get('.config-page').attributes('id')).toBe('pyrowave-encoder')
+    expect(wrapper.get('label[for="pyrowave_bitrate"]')).toBeDefined()
+    expect(wrapper.get('#pyrowave_bitrate').attributes('max')).toBe('2000000')
   })
 })

@@ -5,12 +5,20 @@
 #pragma once
 #include "video.h"
 
+#include <cstdint>
 #include <vulkan/vulkan.h>
 
 // The standalone API requires Vulkan types to be declared first.
 #include <pyrowave.h>
 
 namespace video {
+  /**
+   * @brief Map a DRM RGB FourCC to the equivalent Vulkan image format.
+   * @param fourcc DRM format supplied by the capture backend.
+   * @return Vulkan format, or VK_FORMAT_UNDEFINED when unsupported.
+   */
+  VkFormat pyrowave_vk_format(std::uint32_t fourcc);
+
   /**
    * @brief Intra-only encoder that imports captured DMA-BUF images.
    */

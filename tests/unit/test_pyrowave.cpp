@@ -35,6 +35,19 @@ TEST(PyroWave, RejectInvalidConfiguration) {
 }
 
 /**
+ * @brief Captured DRM formats must retain their component order and precision.
+ */
+TEST(PyroWave, MapsCaptureFormats) {
+  EXPECT_EQ(video::pyrowave_vk_format(DRM_FORMAT_XRGB8888), VK_FORMAT_B8G8R8A8_UNORM);
+  EXPECT_EQ(video::pyrowave_vk_format(DRM_FORMAT_ABGR8888), VK_FORMAT_R8G8B8A8_UNORM);
+  EXPECT_EQ(video::pyrowave_vk_format(DRM_FORMAT_XRGB2101010), VK_FORMAT_A2R10G10B10_UNORM_PACK32);
+  EXPECT_EQ(video::pyrowave_vk_format(DRM_FORMAT_ABGR2101010), VK_FORMAT_A2B10G10R10_UNORM_PACK32);
+  EXPECT_EQ(video::pyrowave_vk_format(DRM_FORMAT_XBGR16161616), VK_FORMAT_R16G16B16A16_UNORM);
+  EXPECT_EQ(video::pyrowave_vk_format(DRM_FORMAT_ABGR16161616), VK_FORMAT_R16G16B16A16_UNORM);
+  EXPECT_EQ(video::pyrowave_vk_format(DRM_FORMAT_NV12), VK_FORMAT_UNDEFINED);
+}
+
+/**
  * @brief Test a real DMA-BUF imported by the production scaling/encode path.
  */
 TEST(PyroWave, DmaBufSdrHdr420444) {

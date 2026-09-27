@@ -9,6 +9,7 @@
 
 #include <cstring>
 #include <drm_fourcc.h>
+#include <iomanip>
 #include <linux/dma-buf.h>
 #include <mutex>
 #include <PyroWave.h>
@@ -18,6 +19,28 @@
 #include <unistd.h>
 
 namespace video {
+  VkFormat pyrowave_vk_format(std::uint32_t fourcc) {
+    switch (fourcc) {
+      case DRM_FORMAT_XRGB8888:
+      case DRM_FORMAT_ARGB8888:
+        return VK_FORMAT_B8G8R8A8_UNORM;
+      case DRM_FORMAT_XBGR8888:
+      case DRM_FORMAT_ABGR8888:
+        return VK_FORMAT_R8G8B8A8_UNORM;
+      case DRM_FORMAT_XRGB2101010:
+      case DRM_FORMAT_ARGB2101010:
+        return VK_FORMAT_A2R10G10B10_UNORM_PACK32;
+      case DRM_FORMAT_XBGR2101010:
+      case DRM_FORMAT_ABGR2101010:
+        return VK_FORMAT_A2B10G10R10_UNORM_PACK32;
+      case DRM_FORMAT_XBGR16161616:
+      case DRM_FORMAT_ABGR16161616:
+        return VK_FORMAT_R16G16B16A16_UNORM;
+      default:
+        return VK_FORMAT_UNDEFINED;
+    }
+  }
+
   pyrowave_session_t::~pyrowave_session_t() {
     if (encoder) {
       pyrowave_encoder_destroy(encoder);
@@ -186,27 +209,10 @@ namespace video {
       BOOST_LOG(error) << "Unsupported PyroWave DMA-BUF descriptor (modifier, orientation or extent)";
       return -1;
     }
-    VkFormat format;
-    switch (sd.fourcc) {
-      case DRM_FORMAT_XRGB8888:
-      case DRM_FORMAT_ARGB8888:
-        format = VK_FORMAT_B8G8R8A8_UNORM;
-        break;
-      case DRM_FORMAT_XBGR8888:
-      case DRM_FORMAT_ABGR8888:
-        format = VK_FORMAT_R8G8B8A8_UNORM;
-        break;
-      case DRM_FORMAT_XRGB2101010:
-      case DRM_FORMAT_ARGB2101010:
-        format = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-        break;
-      case DRM_FORMAT_XBGR2101010:
-      case DRM_FORMAT_ABGR2101010:
-        format = VK_FORMAT_A2B10G10R10_UNORM_PACK32;
-        break;
-      default:
-        BOOST_LOG(error) << "Unsupported PyroWave capture DRM format: " << sd.fourcc;
-        return -1;
+    const auto format = pyrowave_vk_format(sd.fourcc);
+    if (format == VK_FORMAT_UNDEFINED) {
+      BOOST_LOG(error) << "Unsupported PyroWave capture DRM format: 0x" << std::hex << sd.fourcc << std::dec;
+      return -1;
     }
     if (hdr_output && (format == VK_FORMAT_B8G8R8A8_UNORM || format == VK_FORMAT_R8G8B8A8_UNORM)) {
       BOOST_LOG(error) << "PyroWave HDR capture must provide at least 10-bit RGB";
