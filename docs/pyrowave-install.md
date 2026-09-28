@@ -1,6 +1,6 @@
-# Install the native PyroWave Sunshine test build on Arch/CachyOS
+# Install the native PyroWave Sunshine build on Linux
 
-This build includes SDR/HDR and 4:2:0/4:4:4. It is a native x86_64 desktop package built on CachyOS with glibc 2.44; it is not a general Ubuntu/Debian package. The Steam Deck client has its own portable AppImage. GPU drivers remain supplied by your OS.
+This build includes SDR/HDR and 4:2:0/4:4:4. It is a native x86_64 desktop package; the GitHub release is built on Ubuntu 24.04 with glibc 2.39. It is not a distribution package. The Steam Deck client has its own portable AppImage. GPU drivers remain supplied by your OS.
 
 ## Install
 

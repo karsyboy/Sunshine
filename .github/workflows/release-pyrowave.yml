@@ -1,0 +1,155 @@
+---
+name: Release PyroWave
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-pyrowave-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Resolve release version
+    runs-on: ubuntu-latest
+    outputs:
+      build_version: ${{ steps.version.outputs.build_version }}
+      release_tag: ${{ steps.version.outputs.release_tag }}
+    steps:
+      - name: Resolve version
+        id: version
+        env:
+          SOURCE_TAG: ${{ github.ref_name }}
+        run: |
+          base_tag="${SOURCE_TAG%-pyrowave}"
+          echo "build_version=${base_tag#v}" >> "${GITHUB_OUTPUT}"
+          echo "release_tag=${base_tag}-pyrowave" >> "${GITHUB_OUTPUT}"
+
+  build-linux:
+    name: Linux x86_64 tarball
+    needs: version
+    runs-on: ubuntu-24.04
+    env:
+      BUILD_VERSION: ${{ needs.version.outputs.build_version }}
+      BRANCH: master
+      COMMIT: ${{ github.sha }}
+    steps:
+      - name: Checkout Sunshine
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Checkout PyroWave
+        uses: actions/checkout@v5
+        with:
+          repository: karsyboy/pyrowave
+          ref: master
+          path: pyrowave
+          submodules: recursive
+
+      - name: Install Sunshine dependencies
+        run: |
+          ./scripts/linux_build.sh \
+            --skip-cuda \
+            --skip-package \
+            --step=deps
+
+      - name: Build and install PyroWave
+        run: |
+          cmake -S pyrowave -B build/pyrowave \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="${GITHUB_WORKSPACE}/build/pyrowave-install" \
+            -DPYROWAVE_DEVEL=OFF \
+            -DPYROWAVE_UTILS=OFF
+          cmake --build build/pyrowave --parallel
+          cmake --install build/pyrowave
+
+      - name: Configure Sunshine
+        env:
+          PKG_CONFIG_PATH: ${{ github.workspace }}/build/pyrowave-install/share/pkgconfig
+        run: |
+          cmake -S . -B build/sunshine -G Ninja \
+            -DBUILD_DOCS=OFF \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_WERROR=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DCMAKE_INSTALL_RPATH=/opt/sunshine-pyrowave/lib \
+            -DSUNSHINE_ASSETS_DIR=share/sunshine \
+            -DSUNSHINE_ASSETS_DIR_DEF=assets \
+            -DSUNSHINE_ENABLE_CUDA=OFF \
+            -DSUNSHINE_ENABLE_DRM=ON \
+            -DSUNSHINE_ENABLE_KWIN=ON \
+            -DSUNSHINE_ENABLE_PORTAL=ON \
+            -DSUNSHINE_ENABLE_PYROWAVE=ON \
+            -DSUNSHINE_ENABLE_WAYLAND=ON \
+            -DSUNSHINE_ENABLE_X11=ON \
+            -DSUNSHINE_EXECUTABLE_PATH=/opt/sunshine-pyrowave/libexec/sunshine \
+            -DSUNSHINE_PUBLISHER_NAME="${GITHUB_REPOSITORY_OWNER}" \
+            -DSUNSHINE_PUBLISHER_WEBSITE="https://github.com/${GITHUB_REPOSITORY}" \
+            -DSUNSHINE_PUBLISHER_ISSUE_URL="https://github.com/${GITHUB_REPOSITORY}/issues"
+
+      - name: Build Sunshine
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/build/pyrowave-install/lib
+        run: cmake --build build/sunshine --parallel --target sunshine web-ui
+
+      - name: Stage miniupnpc runtime
+        run: |
+          mkdir -p build/miniupnpc/lib
+          miniupnpc_path="$(ldconfig -p | awk '/libminiupnpc\.so/{print $NF; exit}')"
+          test -n "${miniupnpc_path}"
+          cp -L "${miniupnpc_path}" "build/miniupnpc/lib/$(basename "${miniupnpc_path}")"
+
+      - name: Create installable archive
+        run: |
+          python3 packaging/linux/package-pyrowave-test.py \
+            --build-dir build/sunshine \
+            --pyrowave-prefix build/pyrowave-install \
+            --pyrowave-source pyrowave \
+            --miniupnpc-prefix build/miniupnpc \
+            --staging-dir build/Sunshine-PyroWave-package \
+            --output artifacts/Sunshine-PyroWave-Linux-x86_64.tar.gz
+          sha256sum artifacts/Sunshine-PyroWave-Linux-x86_64.tar.gz \
+            > artifacts/SHA256SUMS
+          tar -tzf artifacts/Sunshine-PyroWave-Linux-x86_64.tar.gz \
+            | grep -Fq 'Sunshine-PyroWave-Linux-x86_64/install.sh'
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Sunshine-PyroWave-${{ needs.version.outputs.release_tag }}
+          path: artifacts/
+          if-no-files-found: error
+          compression-level: 0
+
+  release:
+    name: Publish GitHub release
+    needs:
+      - version
+      - build-linux
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: Sunshine-PyroWave-${{ needs.version.outputs.release_tag }}
+          path: artifacts
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.version.outputs.release_tag }}
+        run: |
+          gh release create "${RELEASE_TAG}" artifacts/* \
+            --target "${GITHUB_SHA}" \
+            --title "${RELEASE_TAG}" \
+            --generate-notes

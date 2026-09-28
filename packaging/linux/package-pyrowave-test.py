@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a side-by-side native Sunshine test installation for Arch/CachyOS."""
+"""Create a side-by-side native Sunshine PyroWave installation for Linux."""
 import argparse
 from pathlib import Path
 import shutil
@@ -11,6 +11,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-dir", type=Path, required=True)
     parser.add_argument("--pyrowave-prefix", type=Path, required=True)
+    parser.add_argument("--pyrowave-source", type=Path)
     parser.add_argument("--miniupnpc-prefix", type=Path, required=True)
     parser.add_argument("--staging-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -39,7 +40,7 @@ def main():
     licenses = payload / "licenses"
     licenses.mkdir()
     shutil.copy2(source / "LICENSE", licenses / "Sunshine-LICENSE")
-    pyro = source.parent / "pyrowave"
+    pyro = args.pyrowave_source or source.parent / "pyrowave"
     shutil.copy2(pyro / "LICENSE", licenses / "PyroWave-LICENSE")
     if (pyro / "Granite/LICENSE").exists():
         shutil.copy2(pyro / "Granite/LICENSE", licenses / "Granite-LICENSE")
