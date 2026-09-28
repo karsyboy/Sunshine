@@ -170,6 +170,14 @@
     }
   },
   {
+    "id": "pyrowave",
+    "nameKey": "config.category_pyrowave_encoder",
+    "options": {
+      "pyrowave_enabled": "disabled",
+      "pyrowave_bitrate": 0
+    }
+  },
+  {
     "id": "sw",
     "nameKey": "config.category_software_encoder",
     "options": {

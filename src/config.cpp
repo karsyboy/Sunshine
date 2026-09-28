@@ -794,6 +794,8 @@ namespace config {
       {}  // wa
     },  // display_device
 
+    false,  // pyrowave_enabled
+    0,  // pyrowave_bitrate
     0,  // max_bitrate
     0  // minimum_fps_target (0 = framerate)
   };
@@ -1720,6 +1722,10 @@ namespace config {
       video.dd.wa.hdr_toggle_delay = std::chrono::milliseconds {value};
     }
 
+#ifdef SUNSHINE_BUILD_PYROWAVE
+    bool_f(vars, "pyrowave_enabled", video.pyrowave_enabled);
+    int_between_f(vars, "pyrowave_bitrate", video.pyrowave_bitrate, {0, 2000000});
+#endif
     int_f(vars, "max_bitrate", video.max_bitrate);
     double_between_f(vars, "minimum_fps_target", video.minimum_fps_target, {0.0, 1000.0});
 

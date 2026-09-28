@@ -1430,6 +1430,11 @@ namespace confighttp {
     output_tree["status"] = true;
     output_tree["platform"] = SUNSHINE_PLATFORM;
     output_tree["version"] = PROJECT_VERSION;
+#ifdef SUNSHINE_BUILD_PYROWAVE
+    output_tree["pyrowave_available"] = true;
+#else
+    output_tree["pyrowave_available"] = false;
+#endif
 
     auto vars = config::parse_config(file_handler::read_file(config::sunshine.config_file.c_str()));
 

@@ -7,6 +7,7 @@ import VideotoolboxEncoder from './encoders/VideotoolboxEncoder.vue'
 import SoftwareEncoder from './encoders/SoftwareEncoder.vue'
 import VAAPIEncoder from './encoders/VAAPIEncoder.vue'
 import VulkanEncoder from './encoders/VulkanEncoder.vue'
+import PyrowaveEncoder from './encoders/PyrowaveEncoder.vue'
 
 const props = defineProps({
   platform: String,
@@ -58,6 +59,12 @@ const config = ref(props.config)
   <VulkanEncoder
       v-if="currentTab === 'vulkan'"
       :platform="platform"
+      :config="config"
+  />
+
+  <!-- PyroWave Encoder Tab -->
+  <PyrowaveEncoder
+      v-if="currentTab === 'pyrowave'"
       :config="config"
   />
 

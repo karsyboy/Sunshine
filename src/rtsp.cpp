@@ -31,6 +31,10 @@ extern "C" {
 #include "stream.h"
 #include "sync.h"
 #include "video.h"
+#ifdef SUNSHINE_BUILD_PYROWAVE
+  #include "pyrowave.h"
+  #include <PyroWave.h>
+#endif
 
 namespace asio = boost::asio;
 
@@ -956,6 +960,9 @@ namespace rtsp_stream {
       ss << "sprop-parameter-sets=AAAAAU"sv << std::endl;
     }
 
+#ifdef SUNSHINE_BUILD_PYROWAVE
+    if (config::video.pyrowave_enabled) ss << "a=x-ss-pyrowave.version:1\r\n";
+#endif
     if (video::active_av1_mode != 1) {
       ss << "a=rtpmap:98 AV1/90000"sv << std::endl;
     }
@@ -1288,6 +1295,25 @@ namespace rtsp_stream {
 
       respond(sock, session, &option, 400, "BAD REQUEST", req->sequenceNumber, {});
       return;
+    }
+
+    if (config.monitor.videoFormat < 0 || config.monitor.videoFormat > 3) {
+      respond(sock, session, &option, 400, "BAD REQUEST", req->sequenceNumber, {});
+      return;
+    }
+    if (config.monitor.videoFormat == 3) {
+#ifdef SUNSHINE_BUILD_PYROWAVE
+      if (!config::video.pyrowave_enabled || args["x-ss-pyrowave.version"sv] != "1" ||
+          !LiPyroWaveFrameBudget(config.monitor.bitrate, config.monitor.framerate) ||
+          config.monitor.chromaSamplingType < 0 || config.monitor.chromaSamplingType > 1 ||
+          config.monitor.dynamicRange < 0 || config.monitor.dynamicRange > 1 || !video::probe_pyrowave()) {
+#else
+      {
+#endif
+        BOOST_LOG(error) << "Requested PyroWave is unavailable or the stream parameters are invalid";
+        respond(sock, session, &option, 400, "BAD REQUEST", req->sequenceNumber, {});
+        return;
+      }
     }
 
     // Check that any required encryption is enabled

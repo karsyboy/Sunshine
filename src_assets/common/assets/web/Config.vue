@@ -164,7 +164,7 @@
     Volume2,
   } from '@lucide/vue'
 
-  const ENCODER_TAB_IDS = new Set(["nv", "amd", "qsv", "vaapi", "vt", "vulkan", "sw"]);
+  const ENCODER_TAB_IDS = new Set(["nv", "amd", "qsv", "vaapi", "vt", "vulkan", "pyrowave", "sw"]);
 
   /**
    * Compare configuration values without coercing their types.
@@ -218,6 +218,7 @@
     data() {
       return {
         platform: "",
+        pyrowaveAvailable: false,
         saved: false,
         restarted: false,
         config: null,
@@ -270,6 +271,14 @@
         .then((r) => {
           this.config = r;
           this.platform = this.config.platform;
+          this.pyrowaveAvailable = this.config.pyrowave_available === true;
+          delete this.config.pyrowave_available;
+          if (this.pyrowaveAvailable) {
+            this.config.pyrowave_enabled ??= "disabled";
+            this.config.pyrowave_bitrate ??= 0;
+          } else {
+            this.tabs = this.tabs.filter(el => el.id !== "pyrowave");
+          }
 
           if (this.platform === "windows") {
             this.tabs = this.tabs.filter((el) => {
@@ -326,6 +335,7 @@
           'vaapi': 'Gpu',
           'vt': 'Gpu',
           'vulkan': 'Gpu',
+          'pyrowave': 'Gpu',
           'sw': 'Cpu',
         };
         return iconMap[tabId] || 'Settings';
@@ -342,6 +352,10 @@
 
         // create a temp copy of this.config to use for the post request
         let config = this.serialize();
+        if (!this.pyrowaveAvailable) {
+          delete config.pyrowave_enabled;
+          delete config.pyrowave_bitrate;
+        }
 
         // delete default values from this.config
         this.tabs.forEach(tab => {

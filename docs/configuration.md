@@ -1467,6 +1467,30 @@ supported on the current platform.
     </tr>
 </table>
 
+### pyrowave_enabled
+
+Enable the optional native Vulkan PyroWave codec. Requires a build with
+`SUNSHINE_ENABLE_PYROWAVE=ON`. Default: `disabled`.
+
+@code{}
+pyrowave_enabled = enabled
+@endcode
+
+PyroWave is selected explicitly in Moonlight. Automatic selection keeps its
+existing behavior. Linux DMA-BUF capture is required. HDR uses BT.2020/PQ input
+with at least 10-bit RGB; select HDR and 4:4:4 independently in Moonlight.
+
+### pyrowave_bitrate
+
+Optional PyroWave bitrate ceiling in Kbps. Default: `0` (use the client bitrate).
+Valid range: `0` through `2000000`. The stream's bitrate and frame rate must
+produce a per-frame budget between 1 KiB and 3 MiB. The global `max_bitrate`
+setting also applies.
+
+@code{}
+pyrowave_bitrate = 200000
+@endcode
+
 ### minimum_fps_target
 
 <table>

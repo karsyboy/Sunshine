@@ -73,3 +73,5 @@ elseif(UNIX)  # Linux
     option(SUNSHINE_ENABLE_PORTAL
             "Enable XDG portal grab if available" ON)
 endif()
+
+option(SUNSHINE_ENABLE_PYROWAVE "Enable private Vulkan PyroWave codec (pinned standalone API 0.7)." OFF)
